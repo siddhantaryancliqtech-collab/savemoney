@@ -56,8 +56,14 @@ export const storeService = {
 
       const { data, error, count } = await query;
       if (error) {
-        console.warn('Stores table not found, using fallback:', error.message);
-        throw error;
+        console.warn('Stores table not found, returning empty result:', error.message);
+        return {
+          stores: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        };
       }
 
       return {
@@ -68,25 +74,39 @@ export const storeService = {
         totalPages: Math.ceil((count || 0) / limit),
       };
     } catch (error) {
-      console.warn('Failed to fetch stores from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch stores from Supabase, returning empty result:', error);
+      return {
+        stores: [],
+        total: 0,
+        page: filters.page || 1,
+        limit: filters.limit || 12,
+        totalPages: 0,
+      };
     }
   },
 
   // Get single store
   async getStore(id: string): Promise<Store> {
-    const { data, error } = await supabase
-      .from('stores')
-      .select(`
-        *,
-        category:categories(*),
-        offers(*)
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .select(`
+          *,
+          category:categories(*),
+          offers(*)
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data as Store;
+      if (error) {
+        console.warn('Store not found, returning null:', error.message);
+        return null as any;
+      }
+      return data as Store;
+    } catch (error) {
+      console.warn('Failed to fetch store from Supabase:', error);
+      return null as any;
+    }
   },
 
   // Create store
@@ -144,29 +164,40 @@ export const storeService = {
         .order('total_clicks', { ascending: false })
         .limit(12);
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Popular stores not found, returning empty array:', error.message);
+        return [];
+      }
       return data as Store[];
     } catch (error) {
-      console.warn('Failed to fetch popular stores from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch popular stores from Supabase, returning empty array:', error);
+      return [];
     }
   },
 
   // Get featured stores
   async getFeaturedStores(): Promise<Store[]> {
-    const { data, error } = await supabase
-      .from('stores')
-      .select(`
-        *,
-        category:categories(*)
-      `)
-      .eq('is_featured', true)
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .limit(8);
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .eq('is_featured', true)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(8);
 
-    if (error) throw error;
-    return data as Store[];
+      if (error) {
+        console.warn('Featured stores not found, returning empty array:', error.message);
+        return [];
+      }
+      return data as Store[];
+    } catch (error) {
+      console.warn('Failed to fetch featured stores from Supabase, returning empty array:', error);
+      return [];
+    }
   },
 
   // Track store click

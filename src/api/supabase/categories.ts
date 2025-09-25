@@ -13,13 +13,13 @@ export const categoryService = {
         .order('sort_order', { ascending: true });
 
       if (error) {
-        console.warn('Categories table not found, using fallback:', error.message);
-        throw error;
+        console.warn('Categories table not found, returning empty array:', error.message);
+        return [];
       }
       return data as Category[];
     } catch (error) {
-      console.warn('Failed to fetch categories from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch categories from Supabase, returning empty array:', error);
+      return [];
     }
   },
 
@@ -36,11 +36,14 @@ export const categoryService = {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Category not found, returning null:', error.message);
+        return null as any;
+      }
       return data as Category;
     } catch (error) {
       console.warn('Failed to fetch category from Supabase:', error);
-      throw error;
+      return null as any;
     }
   },
 

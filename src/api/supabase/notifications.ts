@@ -28,8 +28,12 @@ export const notificationService = {
         .range(from, to);
 
       if (error) {
-        console.warn('Notifications table not found, using fallback:', error.message);
-        throw error;
+        console.warn('Notifications table not found, returning empty result:', error.message);
+        return {
+          notifications: [],
+          total: 0,
+          unreadCount: 0,
+        };
       }
 
       return {
@@ -38,8 +42,12 @@ export const notificationService = {
         unreadCount: data?.filter(n => !n.is_read).length || 0,
       };
     } catch (error) {
-      console.warn('Failed to fetch notifications from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch notifications from Supabase, returning empty result:', error);
+      return {
+        notifications: [],
+        total: 0,
+        unreadCount: 0,
+      };
     }
   },
 

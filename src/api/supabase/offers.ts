@@ -32,9 +32,6 @@ export const offerService = {
         `);
 
       // Apply filters
-      if (filters.store) {
-        query = query.eq('store_id', filters.store);
-      }
 
     if (filters.storeId) {
       query = query.eq('store_id', filters.storeId);
@@ -90,8 +87,14 @@ export const offerService = {
 
       const { data, error, count } = await query;
       if (error) {
-        console.warn('Offers table not found, using fallback:', error.message);
-        throw error;
+        console.warn('Offers table not found, returning empty result:', error.message);
+        return {
+          offers: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        };
       }
 
       return {
@@ -102,25 +105,39 @@ export const offerService = {
         totalPages: Math.ceil((count || 0) / limit),
       };
     } catch (error) {
-      console.warn('Failed to fetch offers from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch offers from Supabase, returning empty result:', error);
+      return {
+        offers: [],
+        total: 0,
+        page: filters.page || 1,
+        limit: filters.limit || 12,
+        totalPages: 0,
+      };
     }
   },
 
   // Get single offer
   async getOffer(id: string): Promise<Offer> {
-    const { data, error } = await supabase
-      .from('offers')
-      .select(`
-        *,
-        store:stores(*),
-        category:categories(*)
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select(`
+          *,
+          store:stores(*),
+          category:categories(*)
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data as Offer;
+      if (error) {
+        console.warn('Offer not found, returning null:', error.message);
+        return null as any;
+      }
+      return data as Offer;
+    } catch (error) {
+      console.warn('Failed to fetch offer from Supabase:', error);
+      return null as any;
+    }
   },
 
   // Create offer
@@ -168,21 +185,29 @@ export const offerService = {
 
   // Get trending offers
   async getTrendingOffers(): Promise<Offer[]> {
-    const { data, error } = await supabase
-      .from('offers')
-      .select(`
-        *,
-        store:stores(*),
-        category:categories(*)
-      `)
-      .eq('is_trending', true)
-      .eq('is_active', true)
-      .or('expiry_date.is.null,expiry_date.gt.now()')
-      .order('click_count', { ascending: false })
-      .limit(8);
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select(`
+          *,
+          store:stores(*),
+          category:categories(*)
+        `)
+        .eq('is_trending', true)
+        .eq('is_active', true)
+        .or('expiry_date.is.null,expiry_date.gt.now()')
+        .order('click_count', { ascending: false })
+        .limit(8);
 
-    if (error) throw error;
-    return data as Offer[];
+      if (error) {
+        console.warn('Trending offers not found, returning empty array:', error.message);
+        return [];
+      }
+      return data as Offer[];
+    } catch (error) {
+      console.warn('Failed to fetch trending offers from Supabase, returning empty array:', error);
+      return [];
+    }
   },
 
   // Get featured offers
@@ -201,31 +226,42 @@ export const offerService = {
         .order('sort_order', { ascending: true })
         .limit(8);
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Featured offers not found, returning empty array:', error.message);
+        return [];
+      }
       return data as Offer[];
     } catch (error) {
-      console.warn('Failed to fetch featured offers from Supabase:', error);
-      throw error;
+      console.warn('Failed to fetch featured offers from Supabase, returning empty array:', error);
+      return [];
     }
   },
 
   // Get exclusive offers
   async getExclusiveOffers(): Promise<Offer[]> {
-    const { data, error } = await supabase
-      .from('offers')
-      .select(`
-        *,
-        store:stores(*),
-        category:categories(*)
-      `)
-      .eq('is_exclusive', true)
-      .eq('is_active', true)
-      .or('expiry_date.is.null,expiry_date.gt.now()')
-      .order('cashback_rate', { ascending: false })
-      .limit(6);
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select(`
+          *,
+          store:stores(*),
+          category:categories(*)
+        `)
+        .eq('is_exclusive', true)
+        .eq('is_active', true)
+        .or('expiry_date.is.null,expiry_date.gt.now()')
+        .order('cashback_rate', { ascending: false })
+        .limit(6);
 
-    if (error) throw error;
-    return data as Offer[];
+      if (error) {
+        console.warn('Exclusive offers not found, returning empty array:', error.message);
+        return [];
+      }
+      return data as Offer[];
+    } catch (error) {
+      console.warn('Failed to fetch exclusive offers from Supabase, returning empty array:', error);
+      return [];
+    }
   },
 
   // Track offer click
@@ -239,19 +275,27 @@ export const offerService = {
 
   // Get offers by store
   async getOffersByStore(storeId: string): Promise<Offer[]> {
-    const { data, error } = await supabase
-      .from('offers')
-      .select(`
-        *,
-        store:stores(*),
-        category:categories(*)
-      `)
-      .eq('store_id', storeId)
-      .eq('is_active', true)
-      .or('expiry_date.is.null,expiry_date.gt.now()')
-      .order('sort_order', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('offers')
+        .select(`
+          *,
+          store:stores(*),
+          category:categories(*)
+        `)
+        .eq('store_id', storeId)
+        .eq('is_active', true)
+        .or('expiry_date.is.null,expiry_date.gt.now()')
+        .order('sort_order', { ascending: true });
 
-    if (error) throw error;
-    return data as Offer[];
+      if (error) {
+        console.warn('Store offers not found, returning empty array:', error.message);
+        return [];
+      }
+      return data as Offer[];
+    } catch (error) {
+      console.warn('Failed to fetch store offers from Supabase, returning empty array:', error);
+      return [];
+    }
   },
 };

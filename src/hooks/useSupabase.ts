@@ -20,7 +20,19 @@ export const useStores = (filters?: any) => {
     queryKey: ['stores', filters],
     queryFn: async () => {
       try {
-        return await storeService.getStores(filters);
+        const result = await storeService.getStores(filters);
+        // If Supabase returns empty result due to missing tables, use mock data
+        if (result.stores.length === 0 && result.total === 0) {
+          console.warn('Supabase stores table not found, using mock data');
+          return {
+            stores: mockStores,
+            total: mockStores.length,
+            page: 1,
+            limit: 12,
+            totalPages: 1,
+          };
+        }
+        return result;
       } catch (error) {
         console.warn('Supabase stores table not found, using mock data');
         return {
@@ -41,7 +53,13 @@ export const useStore = (id: string) => {
     queryKey: ['store', id],
     queryFn: async () => {
       try {
-        return await storeService.getStore(id);
+        const result = await storeService.getStore(id);
+        // If Supabase returns null due to missing tables, use mock data
+        if (!result) {
+          console.warn('Using mock data for store:', id);
+          return mockStores.find(store => store.id === id) || mockStores[0];
+        }
+        return result;
       } catch (error) {
         console.warn('Using mock data for store:', error);
         return mockStores.find(store => store.id === id) || mockStores[0];
@@ -56,7 +74,13 @@ export const usePopularStores = () => {
     queryKey: ['stores', 'popular'],
     queryFn: async () => {
       try {
-        return await storeService.getPopularStores();
+        const result = await storeService.getPopularStores();
+        // If Supabase returns empty array due to missing tables, use mock data
+        if (result.length === 0) {
+          console.warn('Supabase stores table not found, using mock data for popular stores');
+          return mockStores.filter(store => store.isPopular);
+        }
+        return result;
       } catch (error) {
         console.warn('Supabase stores table not found, using mock data for popular stores');
         return mockStores.filter(store => store.isPopular);
@@ -118,7 +142,19 @@ export const useOffers = (filters?: any) => {
     queryKey: ['offers', filters],
     queryFn: async () => {
       try {
-        return await offerService.getOffers(filters);
+        const result = await offerService.getOffers(filters);
+        // If Supabase returns empty result due to missing tables, use mock data
+        if (result.offers.length === 0 && result.total === 0) {
+          console.warn('Supabase offers table not found, using mock data');
+          return {
+            offers: mockOffers,
+            total: mockOffers.length,
+            page: 1,
+            limit: 12,
+            totalPages: 1,
+          };
+        }
+        return result;
       } catch (error) {
         console.warn('Supabase offers table not found, using mock data');
         return {
@@ -139,7 +175,13 @@ export const useOffer = (id: string) => {
     queryKey: ['offer', id],
     queryFn: async () => {
       try {
-        return await offerService.getOffer(id);
+        const result = await offerService.getOffer(id);
+        // If Supabase returns null due to missing tables, use mock data
+        if (!result) {
+          console.warn('Using mock data for offer:', id);
+          return mockOffers.find(offer => offer.id === id) || mockOffers[0];
+        }
+        return result;
       } catch (error) {
         console.warn('Using mock data for offer:', error);
         return mockOffers.find(offer => offer.id === id) || mockOffers[0];
@@ -154,7 +196,13 @@ export const useTrendingOffers = () => {
     queryKey: ['offers', 'trending'],
     queryFn: async () => {
       try {
-        return await offerService.getTrendingOffers();
+        const result = await offerService.getTrendingOffers();
+        // If Supabase returns empty array due to missing tables, use mock data
+        if (result.length === 0) {
+          console.warn('Using mock data for trending offers');
+          return mockOffers.filter(offer => offer.isTrending);
+        }
+        return result;
       } catch (error) {
         console.warn('Using mock data for trending offers:', error);
         return mockOffers.filter(offer => offer.isTrending);
@@ -169,7 +217,13 @@ export const useFeaturedOffers = () => {
     queryKey: ['offers', 'featured'],
     queryFn: async () => {
       try {
-        return await offerService.getFeaturedOffers();
+        const result = await offerService.getFeaturedOffers();
+        // If Supabase returns empty array due to missing tables, use mock data
+        if (result.length === 0) {
+          console.warn('Supabase offers table not found, using mock data for featured offers');
+          return mockOffers.filter(offer => offer.isExclusive);
+        }
+        return result;
       } catch (error) {
         console.warn('Supabase offers table not found, using mock data for featured offers');
         return mockOffers.filter(offer => offer.isExclusive);
@@ -231,7 +285,13 @@ export const useCategories = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       try {
-        return await categoryService.getCategories();
+        const result = await categoryService.getCategories();
+        // If Supabase returns empty array due to missing tables, use mock data
+        if (result.length === 0) {
+          console.warn('Supabase categories table not found, using mock data');
+          return mockCategories;
+        }
+        return result;
       } catch (error) {
         console.warn('Supabase categories table not found, using mock data');
         return mockCategories;
