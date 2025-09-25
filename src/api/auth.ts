@@ -17,6 +17,7 @@ export interface AuthResponse {
   user: User;
   token: string;
   refreshToken: string;
+  refreshToken: string;
 }
 
 export interface OTPRequest {
@@ -46,6 +47,6 @@ export const authApi = {
   resetPassword: (token: string, password: string): Promise<void> =>
     apiClient.post('/auth/reset-password', { token, password }),
 
-  socialLogin: (provider: string, token: string): Promise<AuthResponse> =>
-    apiClient.post('/auth/social', { provider, token }),
+  getCurrentUser: (): Promise<{ user: User }> =>
+    apiClient.get('/auth/me'),
 };

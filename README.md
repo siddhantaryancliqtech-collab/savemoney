@@ -1,6 +1,6 @@
 # SaveMoney - CashKaro-Style Cashback Platform
 
-A modern, responsive cashback and coupon platform built with React, TypeScript, Tailwind CSS, and Supabase.
+A modern, responsive cashback and coupon platform built with React, TypeScript, and Tailwind CSS.
 
 ## 🚀 Features
 
@@ -12,11 +12,9 @@ A modern, responsive cashback and coupon platform built with React, TypeScript, 
 
 ### 🔐 **Complete Authentication System**
 - Email/Password authentication
-- Google OAuth integration
-- Facebook OAuth integration
-- OTP verification via email
+- JWT-based authentication
 - Password reset functionality
-- Mailtrap email integration
+- Secure token management
 
 ### 💰 **Cashback Platform Features**
 - Browse 500+ partner stores
@@ -36,12 +34,10 @@ A modern, responsive cashback and coupon platform built with React, TypeScript, 
 
 ## 🏗️ **Tech Stack**
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Axios
+- **Backend**: Node.js, Express.js (separate repository)
 - **UI Components**: Custom components with Framer Motion
-- **Authentication**: Supabase Auth with OAuth
-- **Email**: Mailtrap for OTP and notifications
-- **Image Upload**: Cloudinary integration
+- **Authentication**: JWT tokens
 - **State Management**: React Query + Context API
 
 ## 📱 **Responsive Design**
@@ -54,15 +50,14 @@ A modern, responsive cashback and coupon platform built with React, TypeScript, 
 ## 🎯 **Key Components**
 
 ### **RecommendedOffersCarousel**
-- Backend-driven offer recommendations
+- API-driven offer recommendations
 - Smooth carousel with navigation
 - CashKaro-style offer cards
 - Mobile-responsive design
 
 ### **AuthModal**
 - Unified login/signup modal
-- Social OAuth integration
-- OTP verification flow
+- JWT authentication
 - Password reset functionality
 
 ### **NotificationDropdown**
@@ -84,23 +79,17 @@ A modern, responsive cashback and coupon platform built with React, TypeScript, 
    ```
    
    Configure:
-   - Supabase URL and keys
-   - Cloudinary credentials
-   - Mailtrap credentials
+   - Backend API URL
 
-3. **Database Setup**
-   - Connect to Supabase
-   - Migrations will run automatically
-   - Sample data included
+3. **Backend Setup**
+   - Clone the backend repository
+   - Follow backend setup instructions
+   - Start the backend server
 
-4. **OAuth Setup**
-   - Configure Google OAuth in Supabase
-   - Configure Facebook OAuth in Supabase
-   - Add redirect URLs
-
-5. **Email Setup**
-   - Create Mailtrap account
-   - Add SMTP credentials to environment
+4. **Start Development**
+   ```bash
+   npm run dev
+   ```
 
 ## 🚀 **Development**
 
@@ -113,6 +102,16 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## 🔗 **Backend Repository**
+
+The backend is maintained in a separate repository with:
+- Node.js + Express.js API
+- Supabase database integration
+- JWT authentication
+- File upload with Cloudinary
+- Email services
+- Admin panel APIs
 
 ## 📊 **Features Overview**
 
@@ -133,10 +132,10 @@ npm run build
 - ✅ Notification system
 
 ### **Technical Features**
-- ✅ Server-side rendering ready
+- ✅ API-driven architecture
 - ✅ SEO optimized
 - ✅ PWA ready
-- ✅ Image optimization
+- ✅ Responsive design
 - ✅ Caching strategies
 - ✅ Error boundaries
 
@@ -170,17 +169,16 @@ npm run build
 
 ## 🔒 **Security**
 
-- Row Level Security (RLS)
 - JWT token authentication
 - CSRF protection
 - Input validation
-- Secure file uploads
+- Secure API communication
 
 ## 📈 **Performance**
 
 - Code splitting
 - Lazy loading
-- Image optimization
+- API response caching
 - Caching strategies
 - Bundle optimization
 

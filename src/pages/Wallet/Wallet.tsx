@@ -15,7 +15,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input, LoadingSpinner } from '../../components/ui';
-import { useWallet, useTransactions, useCreateWithdrawal } from '../../hooks/useSupabase';
+import { useWallet, useTransactions, useWithdraw } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { WITHDRAWAL_METHODS } from '../../constants';
 import toast from 'react-hot-toast';
@@ -31,9 +31,9 @@ export const Wallet: React.FC = () => {
   });
   const [transactionFilter, setTransactionFilter] = useState('all');
 
-  const { data: walletData, isLoading: walletLoading } = useWallet(user?.id);
-  const { data: transactionsData, isLoading: transactionsLoading } = useTransactions(user?.id);
-  const withdrawMutation = useCreateWithdrawal();
+  const { data: walletData, isLoading: walletLoading } = useWallet();
+  const { data: transactionsData, isLoading: transactionsLoading } = useTransactions();
+  const withdrawMutation = useWithdraw();
 
   const handleWithdraw = async () => {
     if (!withdrawalData.amount || !withdrawalData.method || !withdrawalData.accountDetails) {
@@ -43,14 +43,10 @@ export const Wallet: React.FC = () => {
 
     try {
       await withdrawMutation.mutateAsync({
-        userId: user!.id,
-        withdrawData: {
         amount: parseFloat(withdrawalData.amount),
         method: withdrawalData.method as any,
         accountDetails: withdrawalData.accountDetails,
-        }
       });
-      toast.success('Withdrawal request submitted successfully!');
       setShowWithdrawModal(false);
       setWithdrawalData({ amount: '', method: '', accountDetails: '' });
     } catch (error) {

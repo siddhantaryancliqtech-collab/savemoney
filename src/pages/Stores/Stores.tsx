@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, Filter, Grid2x2 as Grid, List, ExternalLink, Star } from 'lucide-react';
 import { Card, Button, Badge, SearchBar, Pagination, LoadingSpinner } from '../../components/ui';
-import { useStores, useCategories } from '../../hooks/useSupabase';
+import { useStores, useCategories } from '../../hooks/useApi';
 
 export const Stores: React.FC = () => {
   const { t } = useTranslation();

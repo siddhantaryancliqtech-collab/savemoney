@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, Filter, Grid2x2 as Grid, List, ExternalLink, Star, Shirt, Smartphone, Plane, Utensils, Sparkles, Home, BookOpen, Heart } from 'lucide-react';
 import { Card, Button, Badge, SearchBar, LoadingSpinner } from '../../components/ui';
-import { useCategories } from '../../hooks/useSupabase';
+import { useCategories } from '../../hooks/useApi';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../constants';
 

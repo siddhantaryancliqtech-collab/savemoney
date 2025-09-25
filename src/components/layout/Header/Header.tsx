@@ -6,7 +6,7 @@ import { User, Menu, ChevronDown, Globe, ShoppingBag, Wallet, CircleUser as User
 import { Button, SearchBar, NotificationDropdown } from '../../ui';
 import { AuthModal } from '../../auth';
 import { useLanguage } from '../../../hooks';
-import { useNotifications } from '../../../hooks/useSupabase';
+import { useNotifications } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { ROUTES } from '../../../constants';
 

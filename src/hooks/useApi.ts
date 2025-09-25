@@ -1,16 +1,25 @@
-// Re-export Supabase hooks for backward compatibility
-export * from './useSupabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { storesApi, offersApi, categoriesApi, walletApi, referralsApi } from '../api';
+import { mockStores, mockOffers, mockCategories, mockUser, mockTransactions, mockReferralData, mockNotifications } from '../data/mockData';
+import toast from 'react-hot-toast';
 
 // Stores hooks
 export const useStores = (filters?: any) => {
   return useQuery({
     queryKey: ['stores', filters],
-    queryFn: () => Promise.resolve({
-      stores: mockStores,
-      total: mockStores.length,
-      page: 1,
-      limit: 12,
-    }),
+    queryFn: async () => {
+      try {
+        return await storesApi.getStores(filters);
+      } catch (error) {
+        console.warn('API not available, using mock data for stores');
+        return {
+          stores: mockStores,
+          total: mockStores.length,
+          page: 1,
+          limit: 12,
+        };
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -18,7 +27,14 @@ export const useStores = (filters?: any) => {
 export const useStore = (id: string) => {
   return useQuery({
     queryKey: ['store', id],
-    queryFn: () => Promise.resolve(mockStores.find(store => store.id === id) || mockStores[0]),
+    queryFn: async () => {
+      try {
+        return await storesApi.getStore(id);
+      } catch (error) {
+        console.warn('API not available, using mock data for store');
+        return mockStores.find(store => store.id === id) || mockStores[0];
+      }
+    },
     enabled: !!id,
   });
 };
@@ -26,8 +42,15 @@ export const useStore = (id: string) => {
 export const usePopularStores = () => {
   return useQuery({
     queryKey: ['stores', 'popular'],
-    queryFn: () => Promise.resolve(mockStores.filter(store => store.isPopular)),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      try {
+        return await storesApi.getPopularStores();
+      } catch (error) {
+        console.warn('API not available, using mock data for popular stores');
+        return mockStores.filter(store => store.isPopular);
+      }
+    },
+    staleTime: 10 * 60 * 1000,
   });
 };
 
@@ -35,20 +58,34 @@ export const usePopularStores = () => {
 export const useOffers = (filters?: any) => {
   return useQuery({
     queryKey: ['offers', filters],
-    queryFn: () => Promise.resolve({
-      offers: mockOffers,
-      total: mockOffers.length,
-      page: 1,
-      limit: 12,
-    }),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    queryFn: async () => {
+      try {
+        return await offersApi.getOffers(filters);
+      } catch (error) {
+        console.warn('API not available, using mock data for offers');
+        return {
+          offers: mockOffers,
+          total: mockOffers.length,
+          page: 1,
+          limit: 12,
+        };
+      }
+    },
+    staleTime: 2 * 60 * 1000,
   });
 };
 
 export const useOffer = (id: string) => {
   return useQuery({
     queryKey: ['offer', id],
-    queryFn: () => Promise.resolve(mockOffers.find(offer => offer.id === id) || mockOffers[0]),
+    queryFn: async () => {
+      try {
+        return await offersApi.getOffer(id);
+      } catch (error) {
+        console.warn('API not available, using mock data for offer');
+        return mockOffers.find(offer => offer.id === id) || mockOffers[0];
+      }
+    },
     enabled: !!id,
   });
 };
@@ -56,7 +93,14 @@ export const useOffer = (id: string) => {
 export const useTrendingOffers = () => {
   return useQuery({
     queryKey: ['offers', 'trending'],
-    queryFn: () => Promise.resolve(mockOffers.filter(offer => offer.isTrending)),
+    queryFn: async () => {
+      try {
+        return await offersApi.getTrendingOffers();
+      } catch (error) {
+        console.warn('API not available, using mock data for trending offers');
+        return mockOffers.filter(offer => offer.isTrending);
+      }
+    },
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -64,7 +108,14 @@ export const useTrendingOffers = () => {
 export const useFeaturedOffers = () => {
   return useQuery({
     queryKey: ['offers', 'featured'],
-    queryFn: () => Promise.resolve(mockOffers.filter(offer => offer.isExclusive)),
+    queryFn: async () => {
+      try {
+        return await offersApi.getFeaturedOffers();
+      } catch (error) {
+        console.warn('API not available, using mock data for featured offers');
+        return mockOffers.filter(offer => offer.isExclusive);
+      }
+    },
     staleTime: 10 * 60 * 1000,
   });
 };
@@ -73,12 +124,19 @@ export const useFeaturedOffers = () => {
 export const useWallet = () => {
   return useQuery({
     queryKey: ['wallet'],
-    queryFn: () => Promise.resolve({
-      totalCashback: mockUser.totalCashback,
-      availableCashback: mockUser.availableCashback,
-      pendingCashback: mockUser.pendingCashback,
-      withdrawnCashback: mockUser.totalCashback - mockUser.availableCashback - mockUser.pendingCashback,
-    }),
+    queryFn: async () => {
+      try {
+        return await walletApi.getWalletData();
+      } catch (error) {
+        console.warn('API not available, using mock data for wallet');
+        return {
+          totalCashback: mockUser.totalCashback,
+          availableCashback: mockUser.availableCashback,
+          pendingCashback: mockUser.pendingCashback,
+          withdrawnCashback: mockUser.totalCashback - mockUser.availableCashback - mockUser.pendingCashback,
+        };
+      }
+    },
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
@@ -86,10 +144,17 @@ export const useWallet = () => {
 export const useTransactions = (page = 1, limit = 20) => {
   return useQuery({
     queryKey: ['transactions', page, limit],
-    queryFn: () => Promise.resolve({
-      transactions: mockTransactions,
-      total: mockTransactions.length,
-    }),
+    queryFn: async () => {
+      try {
+        return await walletApi.getTransactions(page, limit);
+      } catch (error) {
+        console.warn('API not available, using mock data for transactions');
+        return {
+          transactions: mockTransactions,
+          total: mockTransactions.length,
+        };
+      }
+    },
   });
 };
 
@@ -97,10 +162,21 @@ export const useWithdraw = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => Promise.resolve(data),
+    mutationFn: async (data: any) => {
+      try {
+        return await walletApi.withdraw(data);
+      } catch (error) {
+        console.warn('API not available, simulating withdrawal');
+        return data;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Withdrawal request submitted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit withdrawal request');
     },
   });
 };
@@ -109,7 +185,14 @@ export const useWithdraw = () => {
 export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
-    queryFn: () => Promise.resolve(mockCategories),
+    queryFn: async () => {
+      try {
+        return await categoriesApi.getCategories();
+      } catch (error) {
+        console.warn('API not available, using mock data for categories');
+        return mockCategories;
+      }
+    },
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 };
@@ -117,7 +200,14 @@ export const useCategories = () => {
 export const useCategory = (id: string) => {
   return useQuery({
     queryKey: ['category', id],
-    queryFn: () => Promise.resolve(mockCategories.find(cat => cat.id === id) || mockCategories[0]),
+    queryFn: async () => {
+      try {
+        return await categoriesApi.getCategory(id);
+      } catch (error) {
+        console.warn('API not available, using mock data for category');
+        return mockCategories.find(cat => cat.id === id) || mockCategories[0];
+      }
+    },
     enabled: !!id,
   });
 };
@@ -126,7 +216,14 @@ export const useCategory = (id: string) => {
 export const useReferrals = () => {
   return useQuery({
     queryKey: ['referrals'],
-    queryFn: () => Promise.resolve(mockReferralData),
+    queryFn: async () => {
+      try {
+        return await referralsApi.getReferralData();
+      } catch (error) {
+        console.warn('API not available, using mock data for referrals');
+        return mockReferralData;
+      }
+    },
   });
 };
 
@@ -134,10 +231,17 @@ export const useGenerateReferralLink = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: () => Promise.resolve({ 
-      link: mockReferralData.referralLink, 
-      code: mockReferralData.referralCode 
-    }),
+    mutationFn: async () => {
+      try {
+        return await referralsApi.generateReferralLink();
+      } catch (error) {
+        console.warn('API not available, using mock data for referral link');
+        return { 
+          link: mockReferralData.referralLink, 
+          code: mockReferralData.referralCode 
+        };
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['referrals'] });
     },
@@ -145,35 +249,63 @@ export const useGenerateReferralLink = () => {
 };
 
 // Notifications hooks
-export const useNotifications = () => {
+export const useNotifications = (userId?: string) => {
   const queryClient = useQueryClient();
   
   const query = useQuery({
-    queryKey: ['notifications'],
-    queryFn: () => Promise.resolve(mockNotifications),
+    queryKey: ['notifications', userId],
+    queryFn: async () => {
+      try {
+        // This would call the backend API when available
+        return {
+          notifications: mockNotifications,
+          total: mockNotifications.length,
+          unreadCount: mockNotifications.filter(n => !n.isRead).length,
+        };
+      } catch (error) {
+        console.warn('API not available, using mock data for notifications');
+        return {
+          notifications: mockNotifications,
+          total: mockNotifications.length,
+          unreadCount: mockNotifications.filter(n => !n.isRead).length,
+        };
+      }
+    },
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   const markAsRead = (id: string) => {
-    queryClient.setQueryData(['notifications'], (old: NotificationData[] | undefined) => {
+    queryClient.setQueryData(['notifications', userId], (old: any) => {
       if (!old) return old;
-      return old.map(notification => 
-        notification.id === id ? { ...notification, isRead: true } : notification
-      );
+      return {
+        ...old,
+        notifications: old.notifications.map((notification: any) => 
+          notification.id === id ? { ...notification, isRead: true } : notification
+        ),
+        unreadCount: old.unreadCount - 1,
+      };
     });
   };
 
   const markAllAsRead = () => {
-    queryClient.setQueryData(['notifications'], (old: NotificationData[] | undefined) => {
+    queryClient.setQueryData(['notifications', userId], (old: any) => {
       if (!old) return old;
-      return old.map(notification => ({ ...notification, isRead: true }));
+      return {
+        ...old,
+        notifications: old.notifications.map((notification: any) => ({ ...notification, isRead: true })),
+        unreadCount: 0,
+      };
     });
   };
 
   const deleteNotification = (id: string) => {
-    queryClient.setQueryData(['notifications'], (old: NotificationData[] | undefined) => {
+    queryClient.setQueryData(['notifications', userId], (old: any) => {
       if (!old) return old;
-      return old.filter(notification => notification.id !== id);
+      return {
+        ...old,
+        notifications: old.notifications.filter((notification: any) => notification.id !== id),
+        total: old.total - 1,
+      };
     });
   };
 

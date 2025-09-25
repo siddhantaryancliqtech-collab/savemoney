@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Clock, Copy, ExternalLink, Filter, Grid2x2 as Grid, List } from 'lucide-react';
 import { Card, Button, Badge, SearchBar, Pagination, LoadingSpinner } from '../../components/ui';
-import { useOffers, useCategories } from '../../hooks/useSupabase';
+import { useOffers, useCategories } from '../../hooks/useApi';
 import toast from 'react-hot-toast';
 
 export const Offers: React.FC = () => {

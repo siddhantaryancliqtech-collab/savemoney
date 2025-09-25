@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import { Card } from '../../../components/ui';
-import { usePopularStores } from '../../../hooks/useSupabase';
+import { usePopularStores } from '../../../hooks/useApi';
 
 export const StoreCarousel: React.FC = () => {
   const { data: stores } = usePopularStores();

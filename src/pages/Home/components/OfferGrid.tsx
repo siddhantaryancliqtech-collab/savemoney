@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, Star, Copy, ExternalLink } from 'lucide-react';
 import { Card, Button, Badge } from '../../../components/ui';
 import { useTranslation } from 'react-i18next';
-import { useFeaturedOffers, useTrendingOffers } from '../../../hooks/useSupabase';
+import { useFeaturedOffers, useTrendingOffers } from '../../../hooks/useApi';
 import toast from 'react-hot-toast';
 
 interface OfferGridProps {

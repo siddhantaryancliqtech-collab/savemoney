@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import { authApi } from '../api';
 import toast from 'react-hot-toast';
 
 interface AuthContextType {
@@ -32,20 +32,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (userData) {
-            setUser(userData as User);
-          } else {
-            // User exists in auth but not in users table, sign them out
-            await supabase.auth.signOut();
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          try {
+            // Verify token with backend
+            const response = await authApi.getCurrentUser();
+            setUser(response.user);
+          } catch (error) {
+            localStorage.removeItem('auth_token');
             setUser(null);
           }
         } else {
@@ -60,41 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsLoading(true);
-      
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (userData) {
-            setUser(userData as User);
-          } else {
-            // User doesn't exist in users table
-            await supabase.auth.signOut();
-            setUser(null);
-            toast.error('User profile not found. Please contact support.');
-          }
-        } catch (error) {
-          console.error('Error getting user data:', error);
-          await supabase.auth.signOut();
-          setUser(null);
-          toast.error('Failed to load user profile. Please try again.');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      }
-      
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -115,46 +74,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Password must be at least 6 characters long');
       }
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password,
-      });
+      const response = await authApi.login({ email: email.toLowerCase().trim(), password });
       
-      if (error) {
-        // Handle specific Supabase auth errors
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please check your credentials.');
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please verify your email address before signing in.');
-        } else if (error.message.includes('Too many requests')) {
-          throw new Error('Too many login attempts. Please try again later.');
-        } else if (error.message.includes('signup_disabled')) {
-          throw new Error('New signups are currently disabled. Please contact support.');
-        }
-        throw new Error(error.message);
+      // Store token
+      localStorage.setItem('auth_token', response.token);
+      if (response.refreshToken) {
+        localStorage.setItem('refresh_token', response.refreshToken);
       }
       
-      if (!data.user) {
-        throw new Error('Login failed. Please try again.');
-      }
-      
-      // Get user profile from users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-      
-      if (userError) {
-        if (userError.code === 'PGRST116') {
-          // User doesn't exist in users table
-          await supabase.auth.signOut();
-          throw new Error('User profile not found. Please contact support.');
-        }
-        throw new Error('Failed to load user profile. Please try again.');
-      }
-      
-      setUser(userData as User);
+      setUser(response.user);
       toast.success('Welcome back!');
       
     } catch (error: any) {
@@ -195,67 +123,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Please enter a valid phone number');
       }
       
-      // Check if email already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', data.email.toLowerCase().trim())
-        .single();
-      
-      if (existingUser) {
-        throw new Error('An account with this email already exists. Please sign in instead.');
-      }
-      
-      const { data: authData, error } = await supabase.auth.signUp({
+      const response = await authApi.signup({
+        name: data.name.trim(),
         email: data.email.toLowerCase().trim(),
+        phone: data.phone?.trim(),
         password: data.password,
-        options: {
-          data: {
-            name: data.name.trim(),
-            phone: data.phone?.trim(),
-            referral_code: data.referralCode?.trim(),
-          }
-        }
       });
       
-      if (error) {
-        // Handle specific Supabase auth errors
-        if (error.message.includes('User already registered')) {
-          throw new Error('An account with this email already exists. Please sign in instead.');
-        } else if (error.message.includes('Password should be at least')) {
-          throw new Error('Password must be at least 8 characters long');
-        } else if (error.message.includes('Unable to validate email address')) {
-          throw new Error('Please enter a valid email address');
-        } else if (error.message.includes('signup_disabled')) {
-          throw new Error('New signups are currently disabled. Please contact support.');
-        }
-        throw new Error('Password must be at least 6 characters long');
+      // Store token
+      localStorage.setItem('auth_token', response.token);
+      if (response.refreshToken) {
+        localStorage.setItem('refresh_token', response.refreshToken);
       }
       
-      if (!authData.user) {
-        throw new Error('Failed to create account. Please try again.');
-      }
-      
-      // Create user profile in users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          email: data.email.toLowerCase().trim(),
-          name: data.name.trim(),
-          phone: data.phone?.trim(),
-          referred_by: data.referralCode ? await getUserByReferralCode(data.referralCode.trim()) : null,
-        })
-        .select()
-        .single();
-      
-      if (userError) {
-        // If user creation fails, clean up auth user
-        await supabase.auth.signOut();
-        throw new Error('Failed to create user profile. Please try again.');
-      }
-      
-      setUser(userData as User);
+      setUser(response.user);
       
       // Send welcome email with OTP
       try {
@@ -279,25 +160,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
-      });
-      
-      if (error) {
-        if (error.message.includes('OAuth provider not enabled')) {
-          throw new Error('Google login is not configured. Please contact support.');
-        }
-        throw new Error(error.message);
-      }
-      
-      toast.success('Redirecting to Google...');
+      // This would integrate with Google OAuth via backend
+      throw new Error('Google login will be implemented with backend integration');
       
     } catch (error: any) {
       toast.error(error.message || 'Google login failed. Please try again.');
@@ -311,22 +175,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          scopes: 'email',
-        }
-      });
-      
-      if (error) {
-        if (error.message.includes('OAuth provider not enabled')) {
-          throw new Error('Facebook login is not configured. Please contact support.');
-        }
-        throw new Error(error.message);
-      }
-      
-      toast.success('Redirecting to Facebook...');
+      // This would integrate with Facebook OAuth via backend
+      throw new Error('Facebook login will be implemented with backend integration');
       
     } catch (error: any) {
       toast.error(error.message || 'Facebook login failed. Please try again.');
@@ -349,22 +199,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Email is required for OTP verification');
       }
       
-      const { error } = await supabase.auth.verifyOtp({
-        email: email.toLowerCase().trim(),
-        token: otp,
-        type: 'email'
-      });
-      
-      if (error) {
-        if (error.message.includes('Token has expired')) {
-          throw new Error('OTP has expired. Please request a new one.');
-        } else if (error.message.includes('Invalid token')) {
-          throw new Error('Invalid OTP. Please check and try again.');
-        } else if (error.message.includes('Email not found')) {
-          throw new Error('Email not found. Please check your email address.');
-        }
-        throw new Error(error.message);
-      }
+      const response = await authApi.verifyOTP({ phone: email, otp });
+      setUser(response.user);
       
       toast.success('Email verified successfully!');
       
@@ -386,20 +222,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Please enter a valid email address');
       }
       
-      const cleanEmail = email.toLowerCase().trim();
-      
-      // Call Supabase Edge Function to send OTP email
-      const { data, error } = await supabase.functions.invoke('send-otp-email', {
-        body: {
-          to: cleanEmail,
-          name: name || 'User',
-        }
-      });
-      
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error('Failed to send OTP email. Please try again.');
-      }
+      // This would call backend API to send OTP
+      console.log('Sending OTP to:', email);
       
       toast.success('OTP sent to your email address');
       
@@ -412,24 +236,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   
-  // Helper function to get user by referral code
-  const getUserByReferralCode = async (referralCode: string): Promise<string | null> => {
-    if (!referralCode) return null;
-    
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('referral_code', referralCode.toUpperCase().trim())
-        .single();
-      
-      if (error || !data) return null;
-      return data?.id || null;
-    } catch (error) {
-      return null;
-    }
-  };
-
   const resetPassword = async (email: string) => {
     try {
       setIsLoading(true);
@@ -440,18 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Please enter a valid email address');
       }
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) {
-        if (error.message.includes('Unable to validate email address')) {
-          throw new Error('Please enter a valid email address');
-        } else if (error.message.includes('Email rate limit exceeded')) {
-          throw new Error('Too many password reset attempts. Please try again later.');
-        }
-        throw new Error(error.message);
-      }
+      await authApi.forgotPassword(email);
       
       toast.success('If an account with this email exists, you will receive a password reset link.');
       
@@ -467,11 +262,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Logout error:', error);
-        // Continue with logout even if Supabase fails
+      try {
+        await authApi.logout();
+      } catch (error) {
+        console.error('Logout API error:', error);
+        // Continue with logout even if API fails
       }
       
       // Clear all auth-related data

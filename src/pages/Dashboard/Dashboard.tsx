@@ -12,7 +12,7 @@ import {
   Star,
 } from 'lucide-react';
 import { Card, Button, Badge } from '../../components/ui';
-import { useWallet, useTransactions } from '../../hooks/useSupabase';
+import { useWallet, useTransactions } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../constants';

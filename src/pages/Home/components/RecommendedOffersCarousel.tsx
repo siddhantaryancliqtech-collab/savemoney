@@ -4,7 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight, Clock, Copy, ExternalLink, Star, Zap, Play, Pause } from 'lucide-react';
 import { Card, Button, Badge } from '../../../components/ui';
-import { useFeaturedOffers } from '../../../hooks/useSupabase';
+import { useFeaturedOffers, useTrendingOffers } from '../../../hooks/useApi';
 import toast from 'react-hot-toast';
 
 export const RecommendedOffersCarousel: React.FC = () => {

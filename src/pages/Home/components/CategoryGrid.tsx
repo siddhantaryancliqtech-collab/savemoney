@@ -11,7 +11,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { Card } from '../../../components/ui';
-import { useCategories } from '../../../hooks/useSupabase';
+import { useCategories } from '../../../hooks/useApi';
 
 export const CategoryGrid: React.FC = () => {
   const { data: categories } = useCategories();
